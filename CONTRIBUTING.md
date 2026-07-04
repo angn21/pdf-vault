@@ -5,9 +5,8 @@ Thanks for helping improve PDF Vault!
 ## Development setup
 
 1. Fork and clone the repo
-2. Copy `.env.example` to `.env`
-3. Start the PDF worker: `cd pdf-worker && pip install -r requirements.txt && uvicorn main:app --reload`
-4. Start the web UI: `cd web && npm install && npm run dev`
+2. **Without Docker:** run `./start-dev.sh` (macOS/Linux) or `start-dev.bat` (Windows), or start the worker and web UI manually — see [README](README.md#local-development-without-docker)
+3. **With Docker:** copy `.env.example` to `.env`, then `docker compose up --build`
 
 ## Pull requests
 

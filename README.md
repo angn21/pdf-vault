@@ -24,12 +24,21 @@ Self-hosted, privacy-first PDF toolkit — a local alternative to cloud services
 ### Automate
 - **Workflows** — chain tools in one job (e.g. compress → watermark → protect)
 
+## Requirements
+
+**Docker is optional.** Pick one way to run PDF Vault:
+
+| Method | You need |
+|--------|----------|
+| **Docker** (easiest all-in-one) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
+| **Local dev** (no Docker) | [Python 3.9+](https://www.python.org/) and [Node.js 18+](https://nodejs.org/) |
+
+Most tools work out of the box with `pip install`. Optional system tools improve compress, OCR, and repair — see [Optional tools](#optional-system-tools) below.
+
 ## Quick start (Docker)
 
-**Requirements:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-
 ```bash
-git clone https://github.com/yourusername/pdf-vault.git
+git clone https://github.com/angn21/pdf-vault.git
 cd pdf-vault
 cp .env.example .env
 docker compose up --build
@@ -39,24 +48,66 @@ Open **http://localhost:3000**
 
 ## Local development (without Docker)
 
-From the project root on Windows, run **`start-dev.bat`** to launch the worker and web UI in separate terminals.
+### One-command start
 
-Or manually:
+**Windows** — double-click or run from the project root:
 
-### PDF Worker (Python)
-
-```bash
-cd pdf-worker
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-set DATA_DIR=..\data\jobs     # Windows
-uvicorn main:app --host 127.0.0.1 --port 8000
+```bat
+start-dev.bat
 ```
 
-> Optional system tools for best results: [Ghostscript](https://www.ghostscript.com/) (compress), [qpdf](https://github.com/qpdf/qpdf), [Poppler](https://poppler.freedesktop.org/), [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki) (OCR). Pure-Python fallbacks cover PDF→image and basic compress when these are missing.
+**macOS / Linux** — from the project root:
 
-### Web UI (Next.js)
+```bash
+chmod +x start-dev.sh   # first time only
+./start-dev.sh
+```
+
+On macOS this opens two Terminal windows (worker + web). On Linux, or if you prefer a single terminal, run:
+
+```bash
+PDF_VAULT_NO_TERMINAL=1 ./start-dev.sh
+```
+
+Open **http://localhost:3000**
+
+### Manual setup
+
+Use two terminals if you prefer to start services yourself.
+
+#### Terminal 1 — PDF worker (Python)
+
+**macOS / Linux:**
+
+```bash
+git clone https://github.com/angn21/pdf-vault.git
+cd pdf-vault/pdf-worker
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+export DATA_DIR="$(cd .. && pwd)/data/jobs"
+mkdir -p "$DATA_DIR"
+
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+**Windows (PowerShell):**
+
+```powershell
+cd pdf-worker
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+
+$env:DATA_DIR = "..\data\jobs"
+New-Item -ItemType Directory -Force -Path $env:DATA_DIR
+
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+#### Terminal 2 — Web UI (Next.js)
 
 ```bash
 cd web
@@ -65,6 +116,19 @@ npm run dev
 ```
 
 Open **http://localhost:3000**
+
+### Optional system tools
+
+Not required for basic use. Pure-Python fallbacks cover PDF→image and light compression when these are missing.
+
+| Tool | Used for | macOS (Homebrew) | Windows |
+|------|----------|------------------|---------|
+| [Ghostscript](https://www.ghostscript.com/) | Strong compress | `brew install ghostscript` | [Installer](https://ghostscript.com/releases/gsdnld.html) |
+| [qpdf](https://github.com/qpdf/qpdf) | Merge/repair/protect | `brew install qpdf` | [Releases](https://github.com/qpdf/qpdf/releases) |
+| [Poppler](https://poppler.freedesktop.org/) | PDF→image (faster) | `brew install poppler` | [Releases](https://github.com/oschwartz10612/poppler-windows/releases) |
+| [Tesseract](https://github.com/tesseract-ocr/tesseract) | OCR (with `ocrmypdf` from pip) | `brew install tesseract` | [UB Mannheim builds](https://github.com/UB-Mannheim/tesseract/wiki) |
+
+`ocrmypdf` is installed via `pip install -r requirements.txt` but still needs Tesseract on your PATH for OCR jobs.
 
 ## Architecture
 
