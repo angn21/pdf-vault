@@ -1,0 +1,38 @@
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PDF_WORKER_URL=http://pdf-worker:8000
+      - NEXT_PUBLIC_APP_NAME=PDF Vault
+    depends_on:
+      - pdf-worker
+    restart: unless-stopped
+
+  pdf-worker:
+    build:
+      context: ./pdf-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATA_DIR=/data/jobs
+      - JOB_TTL_SECONDS=600
+      - GOTENBERG_URL=http://gotenberg:3000
+    volumes:
+      - pdf_jobs:/data/jobs
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3001:3000"
+    profiles:
+      - office
+    restart: unless-stopped
+
+volumes:
+  pdf_jobs:

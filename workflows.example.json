@@ -1,0 +1,19 @@
+[
+  {
+    "id": "compress-watermark-protect",
+    "name": "Compress → Watermark → Protect",
+    "steps": [
+      { "tool": "compress", "options": { "quality": "ebook" } },
+      { "tool": "watermark", "options": { "text": "CONFIDENTIAL" } },
+      { "tool": "protect", "options": { "password": "change-me" } }
+    ]
+  },
+  {
+    "id": "ocr-compress",
+    "name": "OCR → Compress",
+    "steps": [
+      { "tool": "ocr", "options": {} },
+      { "tool": "compress", "options": { "quality": "ebook" } }
+    ]
+  }
+]
