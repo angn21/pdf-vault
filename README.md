@@ -31,7 +31,7 @@ Self-hosted, privacy-first PDF toolkit — a local alternative to cloud services
 | Method | You need |
 |--------|----------|
 | **Docker** (easiest all-in-one) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
-| **Local dev** (no Docker) | [Python 3.9+](https://www.python.org/) and [Node.js 18+](https://nodejs.org/) |
+| **Local dev** (no Docker) | Python **3.9–3.12** and [Node.js 18+](https://nodejs.org/) |
 
 Most tools work out of the box with `pip install`. Optional system tools improve compress, OCR, and repair — see [Optional tools](#optional-system-tools) below.
 
