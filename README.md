@@ -7,7 +7,7 @@ Self-hosted, privacy-first PDF toolkit — a local alternative to cloud services
 ## Features
 
 ### Organize
-- Merge PDF · Split PDF · Rotate PDF · Organize / reorder pages · Remove pages · Crop PDF
+- Merge PDF · Split PDF · Rotate PDF · Organize / reorder pages · Remove pages · Crop PDF · Page numbers
 
 ### Optimize
 - Compress PDF (Ghostscript quality presets)
@@ -22,7 +22,33 @@ Self-hosted, privacy-first PDF toolkit — a local alternative to cloud services
 - OCR PDF · Repair PDF · PDF to PDF/A · Compare PDF · Redact PDF
 
 ### Automate
-- **Workflows** — chain tools in one job (e.g. compress → watermark → protect)
+- **Workflows** — chain tools in one job (e.g. compress → watermark → protect). Preset recipes live in the UI; see `workflows.example.json` for JSON examples.
+
+## Project structure
+
+```
+pdf-vault/
+├── web/                    # Next.js 15 UI + API proxy (/api/jobs, /api/capabilities)
+│   └── src/
+│       ├── app/            # Pages (home, /tools/[toolId], /workflows)
+│       ├── components/     # ToolCard, ToolWizard, PrivacyBadge
+│       └── lib/            # Tool definitions (tools.ts), API client (api.ts)
+├── pdf-worker/             # FastAPI worker — job queue, PDF processing
+│   ├── main.py             # REST API (/jobs, /tools, /health, /capabilities)
+│   ├── tools.py            # Tool handlers
+│   ├── storage.py          # Ephemeral job storage + TTL sweeper
+│   ├── cli.py              # qpdf / Ghostscript / Poppler wrappers + fallbacks
+│   └── test_tools.py       # Integration smoke tests (pure Python, no CLIs)
+├── data/jobs/              # Local job files (gitignored; .gitkeep only in repo)
+├── docker-compose.yml      # web + pdf-worker services
+├── start-dev.bat           # Windows one-command local start
+├── start-dev.sh            # macOS / Linux one-command local start
+├── workflows.example.json  # Example workflow step chains
+├── .env.example            # Optional env vars for Docker or manual runs
+├── CONTRIBUTING.md
+├── THIRD_PARTY_NOTICES.md
+└── LICENSE
+```
 
 ## Requirements
 
@@ -31,7 +57,7 @@ Self-hosted, privacy-first PDF toolkit — a local alternative to cloud services
 | Method | You need |
 |--------|----------|
 | **Docker** (easiest all-in-one) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
-| **Local dev** (no Docker) | Python **3.9–3.12** and [Node.js 18+](https://nodejs.org/) |
+| **Local dev** (no Docker) | Python **3.9–3.12** (3.14+ is not supported yet) and [Node.js 18+](https://nodejs.org/) |
 
 Most tools work out of the box with `pip install`. Optional system tools improve compress, OCR, and repair — see [Optional tools](#optional-system-tools) below.
 
@@ -40,13 +66,27 @@ Most tools work out of the box with `pip install`. Optional system tools improve
 ```bash
 git clone https://github.com/angn21/pdf-vault.git
 cd pdf-vault
-cp .env.example .env
+cp .env.example .env   # optional — docker-compose.yml sets defaults
 docker compose up --build
 ```
 
 Open **http://localhost:3000**
 
+The `pdf-worker` image bundles qpdf, Ghostscript, Poppler, Tesseract, and OCRmyPDF so compress, OCR, and repair work without extra setup.
+
 ## Local development (without Docker)
+
+### First-time setup
+
+Install web dependencies once:
+
+```bash
+cd web
+npm install
+cd ..
+```
+
+The start scripts create a Python venv in `pdf-worker/` and install `requirements.txt` automatically on first run.
 
 ### One-command start
 
@@ -117,6 +157,8 @@ npm run dev
 
 Open **http://localhost:3000**
 
+The web app talks to the worker at `http://localhost:8000` by default (`PDF_WORKER_URL` in `.env.example` overrides this).
+
 ### Optional system tools
 
 Not required for basic use. Pure-Python fallbacks cover PDF→image and light compression when these are missing.
@@ -130,26 +172,41 @@ Not required for basic use. Pure-Python fallbacks cover PDF→image and light co
 
 `ocrmypdf` is installed via `pip install -r requirements.txt` but still needs Tesseract on your PATH for OCR jobs.
 
+The UI calls `/api/capabilities` to show which optional tools are available on the worker.
+
+### Running tests
+
+From `pdf-worker/` with the venv activated:
+
+```bash
+python test_tools.py
+```
+
 ## Architecture
 
 ```
-Browser → Next.js (web) → FastAPI (pdf-worker) → qpdf / Ghostscript / Poppler / …
+Browser → Next.js (web, port 3000) → FastAPI (pdf-worker, port 8000) → qpdf / Ghostscript / Poppler / pypdf / …
 ```
 
-- **Ephemeral jobs:** each upload gets a UUID folder under `DATA_DIR`
-- **Auto-purge:** files deleted after download + 10-minute TTL sweeper
+- **Ephemeral jobs:** each upload gets a UUID folder under `DATA_DIR` (default `./data/jobs`)
+- **Auto-purge:** files deleted after download + TTL sweeper (`JOB_TTL_SECONDS`, default 600)
 - **No telemetry, no cloud storage, no third-party APIs**
 
 ## API
 
+Worker endpoints (proxied by Next.js under `/api/…`):
+
 | Endpoint | Description |
 |---|---|
+| `GET /health` | Worker liveness check |
+| `GET /capabilities` | Which optional CLIs are installed (ghostscript, qpdf, poppler, ocrmypdf) |
+| `GET /tools` | Tool catalog (id, name, category, accepted file types) |
 | `POST /jobs` | Create job (`tool`, `options`, `files`) |
 | `GET /jobs/:id` | Job status |
 | `GET /jobs/:id/download` | Download result (triggers purge) |
 | `DELETE /jobs/:id` | Manual purge |
 
-The Next.js app proxies these at `/api/jobs`.
+The Next.js app proxies jobs at `/api/jobs` and capabilities at `/api/capabilities`.
 
 ## Privacy
 
