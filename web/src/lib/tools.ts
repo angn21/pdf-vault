@@ -303,10 +303,23 @@ export function getTool(id: string): ToolDefinition | undefined {
   return TOOLS.find((t) => t.id === id);
 }
 
-export const WORKFLOW_PRESETS = [
+export interface WorkflowStep {
+  tool: string;
+  options: Record<string, unknown>;
+}
+
+export interface WorkflowPreset {
+  id: string;
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+}
+
+export const WORKFLOW_PRESETS: WorkflowPreset[] = [
   {
     id: "compress-watermark-protect",
     name: "Compress → Watermark → Protect",
+    description: "Shrink, stamp confidential, then password-lock for sharing.",
     steps: [
       { tool: "compress", options: { quality: "ebook" } },
       { tool: "watermark", options: { text: "CONFIDENTIAL" } },
@@ -314,11 +327,106 @@ export const WORKFLOW_PRESETS = [
     ],
   },
   {
+    id: "compress-protect",
+    name: "Compress → Protect",
+    description: "Smaller file size, then add an open password.",
+    steps: [
+      { tool: "compress", options: { quality: "ebook" } },
+      { tool: "protect", options: { password: "change-me" } },
+    ],
+  },
+  {
+    id: "watermark-protect",
+    name: "Watermark → Protect",
+    description: "Add a draft/confidential stamp, then lock the PDF.",
+    steps: [
+      { tool: "watermark", options: { text: "DRAFT" } },
+      { tool: "protect", options: { password: "change-me" } },
+    ],
+  },
+  {
+    id: "page-numbers-protect",
+    name: "Page Numbers → Protect",
+    description: "Number pages, then password-protect the result.",
+    steps: [
+      { tool: "page-numbers", options: { position: "bottom-center" } },
+      { tool: "protect", options: { password: "change-me" } },
+    ],
+  },
+  {
+    id: "rotate-compress",
+    name: "Rotate → Compress",
+    description: "Fix landscape scans, then reduce file size.",
+    steps: [
+      { tool: "rotate", options: { angle: 90 } },
+      { tool: "compress", options: { quality: "ebook" } },
+    ],
+  },
+  {
+    id: "rotate-watermark",
+    name: "Rotate → Watermark",
+    description: "Rotate pages, then add a visible watermark.",
+    steps: [
+      { tool: "rotate", options: { angle: 90 } },
+      { tool: "watermark", options: { text: "SCANNED COPY" } },
+    ],
+  },
+  {
+    id: "repair-compress",
+    name: "Repair → Compress",
+    description: "Try to fix a damaged PDF, then compress it.",
+    steps: [
+      { tool: "repair", options: {} },
+      { tool: "compress", options: { quality: "ebook" } },
+    ],
+  },
+  {
+    id: "crop-compress",
+    name: "Crop → Compress",
+    description: "Trim margins from scans, then shrink the file.",
+    steps: [
+      { tool: "crop", options: { margin: 20 } },
+      { tool: "compress", options: { quality: "ebook" } },
+    ],
+  },
+  {
+    id: "remove-pages-compress",
+    name: "Remove Pages → Compress",
+    description: "Drop cover pages (edit page list in JSON), then compress.",
+    steps: [
+      { tool: "remove-pages", options: { removePages: [1] } },
+      { tool: "compress", options: { quality: "ebook" } },
+    ],
+  },
+  {
+    id: "compress-watermark",
+    name: "Compress → Watermark",
+    description: "Light two-step prep before emailing a document.",
+    steps: [
+      { tool: "compress", options: { quality: "ebook" } },
+      { tool: "watermark", options: { text: "FOR REVIEW" } },
+    ],
+  },
+  {
     id: "ocr-compress",
     name: "OCR → Compress",
+    description: "Make a scan searchable, then compress (requires Tesseract).",
     steps: [
       { tool: "ocr", options: {} },
       { tool: "compress", options: { quality: "ebook" } },
     ],
   },
+  {
+    id: "unlock-compress",
+    name: "Unlock → Compress",
+    description: "Remove a password you know, then re-compress.",
+    steps: [
+      { tool: "unlock", options: { password: "current-password" } },
+      { tool: "compress", options: { quality: "ebook" } },
+    ],
+  },
 ];
+
+export function getWorkflowPreset(id: string): WorkflowPreset | undefined {
+  return WORKFLOW_PRESETS.find((p) => p.id === id);
+}

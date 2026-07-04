@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ToolWizard } from "@/components/ToolWizard";
 import { getTool } from "@/lib/tools";
@@ -18,7 +19,9 @@ export default async function ToolPage({ params }: Props) {
         <h1 className="text-3xl font-bold mt-4 mb-2">{tool.name}</h1>
         <p className="text-vault-muted">{tool.description}</p>
       </div>
-      <ToolWizard tool={tool} />
+      <Suspense fallback={<div className="text-vault-muted text-sm">Loading…</div>}>
+        <ToolWizard tool={tool} />
+      </Suspense>
     </div>
   );
 }

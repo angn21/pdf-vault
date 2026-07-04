@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Download, Loader2, Upload } from "lucide-react";
 import type { ToolDefinition } from "@/lib/tools";
+import { getWorkflowPreset } from "@/lib/tools";
 import { createJob, pollJob, type JobResponse } from "@/lib/api";
 import { cn, parsePageNumbers } from "@/lib/utils";
 
@@ -11,6 +13,7 @@ interface ToolWizardProps {
 }
 
 export function ToolWizard({ tool }: ToolWizardProps) {
+  const searchParams = useSearchParams();
   const [files, setFiles] = useState<File[]>([]);
   const [options, setOptions] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {};
@@ -23,6 +26,18 @@ export function ToolWizard({ tool }: ToolWizardProps) {
   const [job, setJob] = useState<JobResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (tool.id !== "workflow") return;
+    const presetId = searchParams.get("preset");
+    if (!presetId) return;
+    const preset = getWorkflowPreset(presetId);
+    if (!preset) return;
+    setOptions((prev) => ({
+      ...prev,
+      steps: JSON.stringify(preset.steps, null, 2),
+    }));
+  }, [tool.id, searchParams]);
 
   const accept = tool.accept;
 

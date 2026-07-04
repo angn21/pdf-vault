@@ -8,31 +8,28 @@ export default function WorkflowsPage() {
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-2">Workflows</h1>
       <p className="text-vault-muted mb-8">
-        Chain multiple PDF tools in one job. Pick a preset or build your own with the Workflow
-        tool.
+        Chain multiple PDF tools in one job. Pick a preset to load it in the Workflow tool, or
+        build your own from scratch.
       </p>
 
-      <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {WORKFLOW_PRESETS.map((preset) => (
           <div
             key={preset.id}
-            className="rounded-xl border border-vault-border bg-vault-card p-6"
+            className="rounded-xl border border-vault-border bg-vault-card p-5 flex flex-col"
           >
-            <h2 className="font-semibold mb-2">{preset.name}</h2>
-            <ol className="text-sm text-vault-muted mb-4 list-decimal list-inside space-y-1">
+            <h2 className="font-semibold mb-1">{preset.name}</h2>
+            <p className="text-sm text-vault-muted mb-3 flex-1">{preset.description}</p>
+            <ol className="text-xs text-vault-muted mb-4 list-decimal list-inside space-y-0.5">
               {preset.steps.map((step, i) => (
-                <li key={i}>
-                  {step.tool}
-                  {Object.keys(step.options).length > 0 &&
-                    ` (${JSON.stringify(step.options)})`}
-                </li>
+                <li key={i}>{step.tool}</li>
               ))}
             </ol>
             <Link
-              href={`/tools/workflow`}
+              href={`/tools/workflow?preset=${preset.id}`}
               className="text-sm text-vault-accent2 hover:underline"
             >
-              Open Workflow tool →
+              Use this workflow →
             </Link>
           </div>
         ))}
@@ -47,6 +44,9 @@ export default function WorkflowsPage() {
   {"tool": "protect", "options": {"password": "secret"}}
 ]`}
         </pre>
+        <Link href="/tools/workflow" className="inline-block mt-4 text-vault-accent2 hover:underline">
+          Open blank Workflow tool →
+        </Link>
       </div>
     </div>
   );
